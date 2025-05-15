@@ -2,7 +2,9 @@
 
 ScarletHooks is a V Rising server mod that enables advanced webhook integration for chat messages. It allows admins to configure multiple webhooks for admin, public, and clan-specific notifications, with fine-grained control over which messages are sent and how they are batched. All features are accessible via chat commands and can be customized in the config file.
 
-**Note:** This mod is not exclusive to Discord webhooks; you can use it with other services as well.
+> **Notes:**
+> * This mod does not support sending messages to in-game chat — it only sends messages from the server to external webhooks.
+> * While the mod isn’t restricted to Discord, using other webhook services requires modifying the source code, and recompiling the mod. [See the guide for more information](#guide--troubleshooting).
 
 ---
 
@@ -57,12 +59,16 @@ Most management is done via chat commands. Only admins can use these commands.
 
 ### Webhook Management
 
-- `.hooks add <clan-name> | .hooks add <player-name>`  
+- `.hooks add <clan-name>`  
   Add a clan to the webhook list.  
   *(You must set the webhook URL in the config file and use the reload command after adding.)*
 
-- `.hooks remove <clan-name> | .hooks remove <player-name>`  
-  Remove a clan from the webhook list.
+- `.hooks afp <player-name>`  
+  Add a clan to the webhook list using a player's name (the clan will be detected from the player data).  
+  *(You must set the webhook URL in the config file and use the reload command after adding.)*
+
+- `.hooks remove <clan-name|player-name>`  
+  Remove a clan from the webhook list by clan name or by player name.
 
 - `.hooks reload settings`  
   Reload all settings from the config file.
@@ -74,21 +80,26 @@ Most management is done via chat commands. Only admins can use these commands.
   Reload both settings and webhooks.
 
 - `.hooks list`  
-  List all configured webhooks *(admin, public, and clans)*.
+  List all configured webhooks (admin, public, and clans).
 
 ### Settings
 
 - `.hooks settings <setting> <true|false>`  
-  Change a boolean setting *(except for webhook URLs and intervals, which are handled via the config file)*.
+  Change a boolean setting (except for webhook URLs and intervals, which are handled via the config file).
 
 - `.hooks settings`  
   Show current settings and their values.
 
-- `.hooks forcestop`  
-  Stop the message dispatch system and clear all cache.
+### Dispatch System Control
 
 - `.hooks start`  
-  Starts the message dispatch system if it has been manually stopped.
+  Start the message dispatch system if it has been manually stopped.
+
+- `.hooks stop`  
+  Stop the message dispatch system.
+
+- `.hooks forcestop`  
+  Stop the message dispatch system and clear all cache.
 
 </details>
 
@@ -181,9 +192,6 @@ All settings can be adjusted in the `ScarletHooks.cfg` file located in your serv
 
 ## Guide & Troubleshooting
 
-<details>
-<summary>Click to expand</summary>
-
 ### Getting Started
 
 #### Setting Up a Webhook
@@ -213,7 +221,7 @@ All settings can be adjusted in the `ScarletHooks.cfg` file located in your serv
 1. In-game, use:
    `.hooks add <clan-name>`
    or
-   `.hooks add <player-name>`
+   `.hooks afp <player-name>`
 
 2. Open the config file at: `BepInEx/config/ScarletHooks/ClanWebHookUrls.json`
 
@@ -247,7 +255,7 @@ All settings can be adjusted in the `ScarletHooks.cfg` file located in your serv
 
 Yes, ScarletHooks can work with other webhook services, but:
 
-* You may need to download the mod’s dependencies and manually modify the POST request payload format in the `MessageDispatchSystem.cs` file to match the requirements of your webhook service.
+* You may need to download the mod’s source code and manually modify the POST request payload format in the `MessageDispatchSystem.cs` file to match the requirements of your webhook service.
 * Some services may require additional configuration, such as authentication tokens or custom headers.
 
 ---
@@ -292,5 +300,3 @@ Some mod settings require editing the `.cfg` file directly. This includes:
 * Some other settings
 
 This is due to character limitations in the in-game chat and other reasons.
-
-</details>

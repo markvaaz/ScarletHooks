@@ -10,15 +10,10 @@ namespace ScarletHooks.Commands;
 [CommandGroup("hooks")]
 public static class AdminCommands {
   [Command("add")]
-  public static void Add(ChatCommandContext ctx, string name) {
-    string clanName = null;
-
-    if (PlayerService.TryGetByName(name, out PlayerData playerData)) {
-      clanName = playerData.ClanName;
-    }
-
+  public static void Add(ChatCommandContext ctx, string clanName) {
     if (string.IsNullOrEmpty(clanName)) {
-      clanName = name;
+      ctx.Reply("You must provide a clan name.".FormatError());
+      return;
     }
 
     if (MessageDispatchSystem.ClanWebHookUrls.ContainsKey(clanName)) {
@@ -30,6 +25,27 @@ public static class AdminCommands {
     MessageDispatchSystem.AddClan(clanName);
 
     ctx.Reply($"Clan ~{clanName}~ added to the list of clans, please go to the config file to set the webhook url.".Format());
+    ctx.Reply("Don't forget to reload the webhooks after changing the webhook url.".Format());
+  }
+
+  [Command("afp")]
+  public static void AddFromPlayer(ChatCommandContext ctx, string playerName) {
+    if (!PlayerService.TryGetByName(playerName, out PlayerData playerData) || string.IsNullOrEmpty(playerData.ClanName)) {
+      ctx.Reply($"Player '{playerName}' not found or does not belong to a clan.".FormatError());
+      return;
+    }
+
+    string clanName = playerData.ClanName;
+
+    if (MessageDispatchSystem.ClanWebHookUrls.ContainsKey(clanName)) {
+      ctx.Reply($"This clan already exists, please go to the config file to change the webhook url.".FormatError());
+      ctx.Reply("Don't forget to reload the webhooks after changing the webhook url.".FormatError());
+      return;
+    }
+
+    MessageDispatchSystem.AddClan(clanName);
+
+    ctx.Reply($"Clan ~{clanName}~ (from player '{playerName}') added to the list of clans, please go to the config file to set the webhook url.".Format());
     ctx.Reply("Don't forget to reload the webhooks after changing the webhook url.".Format());
   }
 
