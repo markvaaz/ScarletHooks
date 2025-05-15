@@ -215,14 +215,11 @@ All settings can be adjusted in the `ScarletHooks.cfg` file located in your serv
    or
    `.hooks add <player-name>`
 
-2. Open the config file at:
-   `BepInEx/config/ScarletHooks.cfg`
+2. Open the config file at: `BepInEx/config/ScarletHooks/ClanWebHookUrls.json`
 
 3. Set the webhook URL for the new clan/player entry.
 
-4. Apply changes with the command:
-   `.hooks reload webhooks`
-   or restart the server.
+4. Apply changes with the command: `.hooks reload webhooks` or restart the server.
 
 ---
 
