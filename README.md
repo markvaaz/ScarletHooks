@@ -4,7 +4,7 @@ ScarletHooks is a V Rising server mod that enables advanced webhook integration 
 
 > **Notes:**
 > * This mod does not support sending messages to in-game chat — it only sends messages from the server to external webhooks.
-> * While the mod isn’t restricted to Discord, using other webhook services requires modifying the source code, and recompiling the mod. [See the guide for more information](#guide--troubleshooting).
+> * While the mod isn’t restricted to Discord, using other webhook services may require modifying the source code, and recompiling the mod. [See the guide for more information](#guide--troubleshooting).
 
 ---
 
