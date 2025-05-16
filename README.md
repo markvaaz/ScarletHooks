@@ -1,9 +1,9 @@
 # ScarletHooks
 
-ScarletHooks is a V Rising server mod that enables advanced webhook integration for chat messages. It allows admins to configure multiple webhooks for admin, public, and clan-specific notifications, with fine-grained control over which messages are sent and how they are batched. All features are accessible via chat commands and can be customized in the config file.
+ScarletHooks is a V Rising server mod that enables advanced webhook integration for all chat and login/logout messages. It allows admins to configure multiple webhooks for admin, public, clan-specific, and dedicated login notifications, with fine-grained control over which message types are sent to each destination. Message formats and prefixes are fully customizable via the config file, supporting placeholders like `{playerName}`, `{clanName}`, and `{targetName}`. All features can be managed through in-game chat commands and configuration, including sending login/logout messages to dedicated webhooks.
 
 > **Notes:**
-> * This mod does not support sending messages to in-game chat — it only sends messages from the server to external webhooks.
+> * This mod only supports sending messages from the server to external webhooks. It does not support sending messages to the in-game chat from external sources, and I don't plan to add that feature at this time.
 > * While the mod isn’t restricted to Discord, using other webhook services may require modifying the source code, and recompiling the mod. [See the guide for more information](#guide--troubleshooting).
 
 ---
@@ -19,8 +19,15 @@ ScarletHooks is a V Rising server mod that enables advanced webhook integration 
 - **Advanced Webhook Integration:**  
   Send chat messages and notifications to multiple webhooks, including admin, public, and clan-specific endpoints.  
 
+- **Customizable Message Formats:**  
+  Personalize the format and prefix of login, logout, global, local, clan, and whisper messages via the config file.  
+  *(Supports placeholders like `{playerName}`, `{clanName}`, `{targetName}` for whispers)*
+
 - **Granular Message Routing:**  
-  Configure which types of messages (global, local, clan, whisper) are sent to each webhook. Admin and public webhooks can be toggled for each message type, while clans can have their own dedicated webhooks for clan chat.
+  Configure which types of messages (global, local, clan, whisper, login/logout) are sent to each webhook. Admin, public, and login webhooks can be toggled for each message type, while clans can have their own dedicated webhooks for clan chat and login notifications.
+
+- **Dedicated Login/Logout Webhook:**  
+  Optionally send only login and logout messages to a specific webhook, separate from admin or public chat notifications.
 
 - **Dynamic Clan Webhooks:**  
   Add or remove clan webhooks dynamically via in-game commands. Each clan can have its own webhook URL, managed through the config file and easily updated or reloaded without restarting the server.
@@ -38,7 +45,7 @@ ScarletHooks is a V Rising server mod that enables advanced webhook integration 
   All webhook URLs and clan mappings are saved and loaded automatically from disk, ensuring settings persist across server restarts.
 
 - **Flexible Configuration File:**  
-  Fine-tune all aspects of the mod via the `ScarletHooks.cfg` file, including intervals, enabled message types, and webhook URLs.
+  Fine-tune all aspects of the mod via the `ScarletHooks.cfg` file, including intervals, enabled message types, webhook URLs, and message formats.
 
 - **Status and Debug Commands:**  
   View current settings, all configured webhooks, and the status of the message dispatch system directly from in-game chat.
@@ -145,20 +152,43 @@ All settings can be adjusted in the `ScarletHooks.cfg` file located in your serv
 
 ### General
 
-- **MessageInterval**: Interval (in seconds) between sending messages to webhooks.  
-  *Default: 0.2*
-
-- **OnFailInterval**: Interval (in seconds) to wait before retrying after a webhook failure.  
-  *Default: 2*
-
 - **AdminWebhookURL**: Webhook URL for admin messages.  
   *Default: null*
 
 - **PublicWebhookURL**: Webhook URL for public messages.  
   *Default: null*
 
+- **LoginWebhookURL**: Webhook URL for login/logout messages only.  
+  *Default: null*
+
 - **EnableBatching**: Enable or disable batching of messages to avoid rate limiting.  
   *Default: true*
+
+- **MessageInterval**: Interval (in seconds) between sending messages to webhooks.  
+  *Default: 0.2*
+
+- **OnFailInterval**: Interval (in seconds) to wait before retrying after a webhook failure.  
+  *Default: 2*
+
+### Customization
+
+- **LoginMessageFormat**: Format for login messages.  
+  *Default: `{playerName} has joined the game.`*
+
+- **LogoutMessageFormat**: Format for logout messages.  
+  *Default: `{playerName} has left the game.`*
+
+- **GlobalPrefix**: Prefix for global chat messages.  
+  *Default: `[Global] {playerName}:`*
+
+- **LocalPrefix**: Prefix for local chat messages.  
+  *Default: `[Local] {playerName}:`*
+
+- **ClanPrefix**: Prefix for clan chat messages.  
+  *Default: `[Clan][{clanName}] {playerName}:`*
+
+- **WhisperPrefix**: Prefix for whisper messages.  
+  *Default: `[Whisper to {targetName}] {playerName}:`*
 
 ### Admin
 
@@ -174,6 +204,9 @@ All settings can be adjusted in the `ScarletHooks.cfg` file located in your serv
 - **AdminWhisperMessages**: Enable or disable sending whisper messages to the admin webhook.  
   *Default: true*
 
+- **AdminLoginMessages**: Enable or disable sending login messages to the admin webhook.  
+  *Default: true*
+
 ### Public
 
 - **PublicGlobalMessages**: Enable or disable sending global chat messages to the public webhook.  
@@ -187,6 +220,14 @@ All settings can be adjusted in the `ScarletHooks.cfg` file located in your serv
 
 - **PublicWhisperMessages**: Enable or disable sending whisper messages to the public webhook.  
   *Default: false*
+
+- **PublicLoginMessages**: Enable or disable sending login messages to the public webhook.  
+  *Default: false*
+
+### Clans
+
+- **ClanLoginMessages**: Enable or disable sending login messages to clan webhooks.  
+  *Default: true*
 
 </details>
 
@@ -287,7 +328,7 @@ Yes, ScarletHooks can work with other webhook services, but:
 * The webhook may not be linked in the config file.
 * You may have forgotten to reload after adding it.
 * Double-check the spelling of the clan name in both the command and config — it’s case sensitive.
-  **Recommended**: Use the player name instead, so the mod can automatically detect the clan from the player’s data.
+  **Recommended**: Use the `.hooks afp` command with a player name instead, so the mod can automatically detect the clan from the player’s data.
 
 ---
 
@@ -300,3 +341,9 @@ Some mod settings require editing the `.cfg` file directly. This includes:
 * Some other settings
 
 This is due to character limitations in the in-game chat and other reasons.
+
+---  
+
+### Where do I report bugs?
+
+* [GitHub](https://github.com/markvaaz/ScarletHooks/issues)

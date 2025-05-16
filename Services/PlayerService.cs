@@ -4,6 +4,7 @@ using ProjectM.Network;
 using Unity.Collections;
 using Unity.Entities;
 using System.Linq;
+using ScarletHooks.Systems;
 
 namespace ScarletHooks.Services;
 
@@ -76,6 +77,9 @@ public static class PlayerService {
 
     if (isOffline) {
       PlayerNetworkIds.Remove(networkId);
+      MessageDispatchSystem.HandleLogoutMessage(playerData.Name, playerData.ClanName);
+    } else {
+      MessageDispatchSystem.HandleLoginMessage(playerData.Name, playerData.ClanName);
     }
   }
 

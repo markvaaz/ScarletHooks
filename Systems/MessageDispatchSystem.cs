@@ -18,6 +18,7 @@ public static class MessageDispatchSystem {
 
   public static string AdminWebHookUrl => Settings.Get<string>("AdminWebhookURL");
   public static string PublicWebHookUrl => Settings.Get<string>("PublicWebhookURL");
+  public static string LoginWebhookURL => Settings.Get<string>("LoginWebhookURL");
   public static float MessageInterval => Settings.Get<float>("MessageInterval");
   public static float OnFailInterval => Settings.Get<float>("OnFailInterval");
   public static bool EnableBatching => Settings.Get<bool>("EnableBatching");
@@ -61,62 +62,126 @@ public static class MessageDispatchSystem {
     }
   }
 
-  public static void HandleMessage(string content, ChatMessageType messageType, string clanName, string targetName) {
+  public static void HandleMessage(string content, string playerName, ChatMessageType messageType, string clanName, string targetName) {
     if (string.IsNullOrEmpty(content) || !_isRunning) return;
 
     switch (messageType) {
       case ChatMessageType.Global:
-        GlobalMessage(content); break;
+        GlobalMessage(content, playerName, clanName); break;
 
       case ChatMessageType.Local:
-        LocalMessage(content); break;
+        LocalMessage(content, playerName, clanName); break;
 
       case ChatMessageType.Team:
-        ClanMessage(content, clanName); break;
+        ClanMessage(content, playerName, clanName); break;
 
       case ChatMessageType.Whisper:
-        WhisperMessage(content, targetName); break;
+        WhisperMessage(content, playerName, targetName, clanName); break;
 
       default: break;
     }
   }
 
-  public static void GlobalMessage(string content) {
-    if (Settings.Get<bool>("AdminGlobalMessages"))
-      AddToQueue(AdminWebHookUrl, AddPrefix("Global", content));
+  public static void HandleLoginMessage(string playerName, string clanName) {
+    if (string.IsNullOrEmpty(playerName) || !_isRunning) return;
 
-    if (Settings.Get<bool>("PublicGlobalMessages"))
-      AddToQueue(PublicWebHookUrl, AddPrefix("Global", content));
+    var format = Settings.Get<string>("LoginMessageFormat");
+
+    if (string.IsNullOrEmpty(format)) return;
+
+    var resultMessage = format.Replace("{playerName}", playerName).Replace("{clanName}", clanName);
+
+    if (Settings.Get<bool>("AdminLoginMessages")) {
+      AddToQueue(AdminWebHookUrl, resultMessage);
+    }
+
+    if (Settings.Get<bool>("PublicLoginMessages")) {
+      AddToQueue(PublicWebHookUrl, resultMessage);
+    }
+
+    if (!string.IsNullOrEmpty(clanName) && Settings.Get<bool>("ClanLoginMessages") && ClanWebHookUrls.TryGetValue(clanName, out var url)) {
+      AddToQueue(url, resultMessage);
+    }
+
+    AddToQueue(LoginWebhookURL, resultMessage);
   }
 
-  public static void LocalMessage(string content) {
-    if (Settings.Get<bool>("AdminLocalMessages"))
-      AddToQueue(AdminWebHookUrl, AddPrefix("Local", content));
+  public static void HandleLogoutMessage(string playerName, string clanName) {
+    if (string.IsNullOrEmpty(playerName) || !_isRunning) return;
 
-    if (Settings.Get<bool>("PublicLocalMessages"))
-      AddToQueue(PublicWebHookUrl, AddPrefix("Local", content));
+    var format = Settings.Get<string>("LogoutMessageFormat");
+
+    if (string.IsNullOrEmpty(format)) return;
+
+    var resultMessage = format.Replace("{playerName}", playerName).Replace("{clanName}", clanName);
+
+    if (Settings.Get<bool>("AdminLoginMessages")) {
+      AddToQueue(AdminWebHookUrl, resultMessage);
+    }
+
+    if (Settings.Get<bool>("PublicLoginMessages")) {
+      AddToQueue(PublicWebHookUrl, resultMessage);
+    }
+
+    if (!string.IsNullOrEmpty(clanName) && Settings.Get<bool>("ClanLoginMessages") && ClanWebHookUrls.TryGetValue(clanName, out var url)) {
+      AddToQueue(url, resultMessage);
+    }
+
+    AddToQueue(LoginWebhookURL, resultMessage);
   }
 
-  public static void ClanMessage(string content, string clanName) {
+  public static void GlobalMessage(string content, string playerName, string clanName) {
+    SendMessage(content, playerName, clanName, "GlobalPrefix", "AdminGlobalMessages", "PublicGlobalMessages");
+  }
+
+  public static void LocalMessage(string content, string playerName, string clanName) {
+    SendMessage(content, playerName, clanName, "LocalPrefix", "AdminLocalMessages", "PublicLocalMessages");
+  }
+
+  public static void ClanMessage(string content, string playerName, string clanName) {
     if (string.IsNullOrEmpty(clanName)) return;
 
+    string prefix = BuildPrefix("ClanPrefix", playerName, clanName);
+
     if (Settings.Get<bool>("AdminClanMessages"))
-      AddToQueue(AdminWebHookUrl, AddPrefix($"Clan] [{clanName}", content));
+      AddToQueue(AdminWebHookUrl, $"{prefix} {content}");
 
     if (Settings.Get<bool>("PublicClanMessages"))
-      AddToQueue(PublicWebHookUrl, AddPrefix($"Clan] [{clanName}", content));
+      AddToQueue(PublicWebHookUrl, $"{prefix} {content}");
 
     if (ClanWebHookUrls.TryGetValue(clanName, out var url)) {
-      AddToQueue(url, AddPrefix(clanName, content));
+      AddToQueue(url, $"{prefix} {content}");
     }
   }
 
-  public static void WhisperMessage(string content, string targetName) {
+  public static void WhisperMessage(string content, string playerName, string targetName, string clanName) {
+    string prefix = Settings.Get<string>("WhisperPrefix")
+        .Replace("{playerName}", playerName)
+        .Replace("{targetName}", targetName ?? "")
+        .Replace("{clanName}", clanName ?? "");
+
     if (Settings.Get<bool>("AdminWhisperMessages"))
-      AddToQueue(AdminWebHookUrl, AddPrefix($"Whisper to {targetName}", content));
+      AddToQueue(AdminWebHookUrl, $"{prefix} {content}");
 
     if (Settings.Get<bool>("PublicWhisperMessages"))
-      AddToQueue(PublicWebHookUrl, AddPrefix($"Whisper to {targetName}", content));
+      AddToQueue(PublicWebHookUrl, $"{prefix} {content}");
+  }
+
+  private static void SendMessage(string content, string playerName, string clanName,
+                                string prefixKey, string adminSettingKey, string publicSettingKey) {
+    string prefix = BuildPrefix(prefixKey, playerName, clanName);
+
+    if (Settings.Get<bool>(adminSettingKey))
+      AddToQueue(AdminWebHookUrl, $"{prefix} {content}");
+
+    if (Settings.Get<bool>(publicSettingKey))
+      AddToQueue(PublicWebHookUrl, $"{prefix} {content}");
+  }
+
+  private static string BuildPrefix(string prefixKey, string playerName, string clanName) {
+    return Settings.Get<string>(prefixKey)
+        .Replace("{playerName}", playerName)
+        .Replace("{clanName}", clanName ?? "");
   }
 
   public static void AddToQueue(string webhookUrl, string content) {
@@ -130,8 +195,6 @@ public static class MessageDispatchSystem {
 
     LastUsed.TryAdd(webhookUrl, DateTime.MinValue);
   }
-
-  public static string AddPrefix(string prefix, string message) => $"[{prefix}] {message}";
 
   public static void AddClan(string clanName) {
     ClanWebHookUrls[clanName] = null;

@@ -19,7 +19,6 @@ public static class ChatMessageSystem_Patch {
         var fromData = __instance.EntityManager.GetComponentData<FromCharacter>(entity);
         var userData = __instance.EntityManager.GetComponentData<User>(fromData.User);
         var chatEventData = __instance.EntityManager.GetComponentData<ChatMessageEvent>(entity);
-        var messageText = $"{userData.CharacterName}: {chatEventData.MessageText}";
         var messageType = chatEventData.MessageType;
 
         string clanName = null;
@@ -33,7 +32,7 @@ public static class ChatMessageSystem_Patch {
           targetName = playerData.Name;
         }
 
-        MessageDispatchSystem.HandleMessage(messageText, messageType, clanName, targetName);
+        MessageDispatchSystem.HandleMessage(content: chatEventData.MessageText.ToString(), playerName: userData.CharacterName.ToString(), messageType: messageType, clanName: clanName, targetName: targetName);
       }
     } catch (Exception e) {
       Plugin.LogInstance.LogError($"An error occurred while processing chat message: {e.Message}");
