@@ -107,13 +107,7 @@ public static class MessageDispatchSystem {
       AddToQueue(PublicWebHookUrl, AddPrefix($"Clan] [{clanName}", content));
 
     if (ClanWebHookUrls.TryGetValue(clanName, out var url)) {
-      Console.WriteLine($"Found clan webhook url for {clanName}: {url}");
       AddToQueue(url, AddPrefix(clanName, content));
-    }
-
-    foreach (var (key, value) in ClanWebHookUrls) {
-      Console.WriteLine(clanName);
-      Console.WriteLine($"Clan webhook url for {key}: {value}");
     }
   }
 
@@ -150,8 +144,6 @@ public static class MessageDispatchSystem {
   }
 
   public static async Task<bool> TrySendMessage(string content, string webhookUrl = null) {
-    Console.WriteLine($"Trying to send message with content: {content} to webhook: {webhookUrl}");
-
     if (string.IsNullOrEmpty(webhookUrl) || !IsValidUrl(webhookUrl)) {
       Console.WriteLine("Invalid webhook url.");
       return false;
@@ -174,8 +166,6 @@ public static class MessageDispatchSystem {
 
         return false;
       }
-
-      Console.WriteLine($"Message sent successfully.");
       return true;
     } catch (Exception ex) {
       Console.WriteLine($"Exception while sending webhook message: {ex.Message}");
