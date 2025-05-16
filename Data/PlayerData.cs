@@ -17,6 +17,8 @@ public class PlayerData {
   [JsonIgnore]
   public bool IsOnline { get; set; } = false;
   [JsonIgnore]
+  public NetworkId NetworkId { get; set; }
+  [JsonIgnore]
   public bool IsAdmin => UserEntity.Read<User>().IsAdmin;
   public string ClanName {
     get {

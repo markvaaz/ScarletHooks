@@ -18,6 +18,7 @@ public static class PlayerService {
     EntityQueryBuilder queryBuilder = new(Allocator.Temp);
 
     queryBuilder.AddAll(ComponentType.ReadOnly<User>());
+    queryBuilder.AddAll(ComponentType.ReadOnly<NetworkId>());
     queryBuilder.WithOptions(EntityQueryOptions.IncludeDisabled);
 
     EntityQuery query = Core.EntityManager.CreateEntityQuery(ref queryBuilder);
@@ -44,20 +45,26 @@ public static class PlayerService {
   public static void SetPlayerCache(Entity userEntity, bool isOffline = false) {
     var userData = userEntity.Read<User>();
     var name = userData.CharacterName.ToString();
+    var networkId = userEntity.Read<NetworkId>();
 
     if (!PlayerIds.ContainsKey(userData.PlatformId)) {
       PlayerData newData = new();
       PlayerNames[name.ToLower()] = newData;
       PlayerIds[userData.PlatformId] = newData;
-      PlayerNetworkIds[userEntity.Read<NetworkId>()] = newData;
+      PlayerNetworkIds[networkId] = newData;
       AllPlayers.Add(newData);
     }
 
     var playerData = PlayerIds[userData.PlatformId];
 
-    if (playerData.Name != name) {
+    if (!string.IsNullOrEmpty(playerData.Name) && playerData.Name != name) {
       PlayerNames.Remove(playerData.Name.ToLower());
       PlayerNames[name.ToLower()] = playerData;
+    }
+
+    if (playerData.NetworkId.IsValid && playerData.NetworkId != networkId) {
+      PlayerNetworkIds.Remove(playerData.NetworkId);
+      PlayerNetworkIds[networkId] = playerData;
     }
 
     playerData.Name = name;
@@ -65,9 +72,10 @@ public static class PlayerService {
     playerData.IsOnline = !isOffline && userData.IsConnected;
     playerData.UserEntity = userEntity;
     playerData.CharacterEntity = userData.LocalCharacter._Entity;
+    playerData.NetworkId = networkId;
 
     if (isOffline) {
-      PlayerNetworkIds.Remove(userEntity.Read<NetworkId>());
+      PlayerNetworkIds.Remove(networkId);
     }
   }
 
