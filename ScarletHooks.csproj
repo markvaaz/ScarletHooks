@@ -17,7 +17,7 @@
     <PackageReference Include="VRising.Unhollowed.Client" Version="1.1.*" />
     <PackageReference Include="VRising.VampireCommandFramework" Version="0.9.*" />
     <PackageReference Include="ScarletRCON.SourceSupport" Version="1.*" />
-    <PackageReference Include="ScarletCore" Version="1.3.11" />
+    <PackageReference Include="ScarletCore" Version="1.6.*" />
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">

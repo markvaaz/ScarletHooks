@@ -21,7 +21,7 @@ public class Plugin : BasePlugin {
   public static Plugin Instance { get; private set; }
   public static ManualLogSource LogInstance { get; private set; }
   public static Settings Settings { get; private set; }
-  public static Database Database { get; private set; }
+  public static JsonDatabase Database { get; private set; }
 
   public override void Load() {
     Instance = this;
@@ -31,7 +31,7 @@ public class Plugin : BasePlugin {
     _harmony.PatchAll(Assembly.GetExecutingAssembly());
 
     Settings = new Settings(MyPluginInfo.PLUGIN_GUID, Instance);
-    Database = new Database(MyPluginInfo.PLUGIN_GUID);
+    Database = new JsonDatabase(MyPluginInfo.PLUGIN_GUID);
 
     LoadSettings();
 
@@ -45,6 +45,9 @@ public class Plugin : BasePlugin {
     RconCommandRegistrar.UnregisterAssembly();
     EventManager.UnregisterAssembly(Assembly.GetExecutingAssembly());
     _harmony?.UnpatchSelf();
+    _harmony?.UnpatchSelf();
+    EventManager.UnregisterAssembly(Assembly.GetExecutingAssembly());
+    Database.DisableAutoBackup();
     return true;
   }
 

@@ -25,7 +25,7 @@ namespace ScarletHooks.Systems;
 public static class MessageDispatchSystem {
   private static readonly HttpClient _httpClient = new();
   private static Settings Settings => Plugin.Settings;
-  private static Database Database => Plugin.Database;
+  private static JsonDatabase Database => Plugin.Database;
   public static string AdminWebHookUrl => Settings.Get<string>("AdminWebhookURL");
   public static string PublicWebHookUrl => Settings.Get<string>("PublicWebhookURL");
   public static string LoginWebhookURL => Settings.Get<string>("LoginWebhookURL");
@@ -85,6 +85,8 @@ public static class MessageDispatchSystem {
     if (!_isRunning) return;
 
     foreach (var entity in entities) {
+      if (!entity.Exists()) continue;
+      if (!entity.Has<VampireDownedBuff>() || !entity.Has<EntityOwner>()) continue;
       var downedBuff = entity.Read<VampireDownedBuff>();
       var downedOwner = entity.Read<EntityOwner>();
       Entity killerOwner = Entity.Null;
@@ -93,11 +95,11 @@ public static class MessageDispatchSystem {
         continue;
       }
 
-      if (downedBuff.Source != Entity.Null) {
+      if (downedBuff.Source != Entity.Null && downedBuff.Source.Exists() && downedBuff.Source.Has<EntityOwner>()) {
         killerOwner = downedBuff.Source.Read<EntityOwner>().Owner;
       }
 
-      if (killerOwner == Entity.Null && downedBuff.SourceSpell != Entity.Null) {
+      if (killerOwner == Entity.Null && downedBuff.SourceSpell != Entity.Null && downedBuff.SourceSpell.Exists() && downedBuff.SourceSpell.Has<EntityOwner>()) {
         killerOwner = downedBuff.SourceSpell.Read<EntityOwner>().Owner;
       }
 
@@ -134,6 +136,7 @@ public static class MessageDispatchSystem {
     if (!_isRunning) return;
 
     foreach (var entity in entities) {
+      if (!entity.Exists()) continue;
       var deathEvent = entity.Read<DeathEvent>();
 
       var died = deathEvent.Died;
@@ -166,19 +169,17 @@ public static class MessageDispatchSystem {
   private static void HandleConnectionEvent(PlayerData playerData) {
     if (!_isRunning) return;
     var now = DateTime.UtcNow;
-    var lastConnected = playerData.GetData<DateTime>();
+    var lastConnected = playerData.LastConnected;
 
     bool isRecentConnect = (now - lastConnected).TotalSeconds < 10;
     if (!isRecentConnect) {
       HandleLoginMessage(playerData.Name, playerData.ClanName);
     }
-
-    playerData.SetData(now);
   }
 
   private static void HandleDisconnectionEvent(PlayerData playerData) {
     var now = DateTime.UtcNow;
-    var disconnectedSince = playerData.GetData<DateTime>();
+    var disconnectedSince = playerData.LastConnected;
 
     bool isRecentDisconnect = disconnectedSince != default && (now - disconnectedSince).TotalSeconds < 10;
 
@@ -187,8 +188,11 @@ public static class MessageDispatchSystem {
     }
   }
 
+  [EventPriority(EventPriority.First)]
   public static void HandleMessageEvent(NativeArray<Entity> entities) {
     foreach (var entity in entities) {
+      if (!entity.Exists()) continue;
+      if (!entity.Has<FromCharacter>() || !entity.Has<ChatMessageEvent>()) continue;
       var character = entity.Read<FromCharacter>().Character;
       var messageEvent = entity.Read<ChatMessageEvent>();
       var message = messageEvent.MessageText.Value;
@@ -200,7 +204,7 @@ public static class MessageDispatchSystem {
         receiver = receiverEntity.GetPlayerData();
       }
 
-      if (string.IsNullOrEmpty(message) || string.IsNullOrEmpty(sender.Name)) return;
+      if (string.IsNullOrEmpty(message) || string.IsNullOrEmpty(sender.Name)) continue;
 
       HandleMessage(message, sender.Name, messageType, sender.ClanName, receiver?.Name);
     }
