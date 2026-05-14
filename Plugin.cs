@@ -45,7 +45,6 @@ public class Plugin : BasePlugin {
     RconCommandRegistrar.UnregisterAssembly();
     EventManager.UnregisterAssembly(Assembly.GetExecutingAssembly());
     _harmony?.UnpatchSelf();
-    _harmony?.UnpatchSelf();
     EventManager.UnregisterAssembly(Assembly.GetExecutingAssembly());
     Database.DisableAutoBackup();
     return true;

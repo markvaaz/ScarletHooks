@@ -188,7 +188,7 @@ public static class MessageDispatchSystem {
     }
   }
 
-  [EventPriority(EventPriority.First)]
+  [EventPriority(EventPriority.Low)]
   public static void HandleMessageEvent(NativeArray<Entity> entities) {
     foreach (var entity in entities) {
       if (!entity.Exists()) continue;
